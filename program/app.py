@@ -6,6 +6,25 @@ from os.path import exists
 # Create an instance of Typer class
 app = typer.Typer()
 
+def file_exists(file: str, path: str="") -> bool:
+    """
+    Checks if the file exists or not
+
+    Args:
+    - `file`: file name;
+    - `path`: path to the folder where .yml(.yaml) files are present.
+    """
+
+    if len(path) > 0:
+        file_path = path + f"{file}"
+    else:
+        file_path = file
+
+    if exists(file_path + ".yml") or exists(file_path + ".yaml"):
+        return True
+    else:
+        sys.stdout.write(f"Error: file does not exist {file}.yml(.yaml)\n")
+        return False
 
 def list_entries(type: str, path: str) -> None:
     """
@@ -15,18 +34,25 @@ def list_entries(type: str, path: str) -> None:
     - `type`: what to list (tasks or builds);
     - `path`: path to the folder where .yml(.yaml) files are present.
     """
-    sys.stdout.write(f"List of available {type}:\n")
     
+    if not file_exists(type, path):
+        return
+
     # Open the file
     with open(path + f"{type}.yml") as f:
         data = yaml.safe_load(f)[type]
     
+    if not data:
+        sys.stdout.write(f"There are no {type}\n")
+        return
+
+    sys.stdout.write(f"List of available {type}:\n")
+
     # Print out all of the file's entries
     # By their names
     for entry in data:
         name = entry["name"]
         sys.stdout.write(f"- {name}\n")
-
 
 def get_dependencies(name: str, path: str) -> str:
     """
@@ -59,7 +85,6 @@ def get_dependencies(name: str, path: str) -> str:
             tasks_str += f"{task_name}, "
         
     return tasks_str
-
 
 def get_entry(type: str, name: str, path: str) -> None:
     """
@@ -114,7 +139,6 @@ def get_entry(type: str, name: str, path: str) -> None:
     # By the passed name
     sys.stdout.write(f"Error: no such {type}\n")
 
-
 def folder_correct(path: str) -> bool:
     """
     Checks if the folder exists or not
@@ -124,10 +148,9 @@ def folder_correct(path: str) -> bool:
     """
 
     if len(path) > 0 and not exists(path):
-        sys.stdout.write("Error: folder does not exists\n")
+        sys.stdout.write("Error: folder does not exist\n")
         return False
     return True
-
 
 @app.command()
 def list(type: str, path: str="") -> None:
@@ -158,7 +181,6 @@ def list(type: str, path: str="") -> None:
     else:
         # Print out the error
         sys.stdout.write(f"Error: unexpected argument, should be 'builds' or 'tasks'\n")
-        
 
 @app.command()
 def get(type: str, name: str, path: str="") -> None:
@@ -181,11 +203,11 @@ def get(type: str, name: str, path: str="") -> None:
     # If argument builds was passed
     if type.lower() == "build":
         # Print out the information about the build
-        get_entry(type, name, path)
+        get_entry(type.lower(), name, path)
     # If argument tasks was passed
     elif type.lowe() == "task":
         # Print out the information about the task
-        get_entry(type, name, path)
+        get_entry(type.lower(), name, path)
     # If there is a typo or a wrong argument
     else:
         # Print out the error
