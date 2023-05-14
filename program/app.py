@@ -6,7 +6,7 @@ from os.path import exists
 # Create an instance of Typer class
 app = typer.Typer()
 
-def file_exists(file: str, path: str="") -> bool:
+def file_exists(file: str, path: str="") -> tuple:
     """
     Checks if the file exists or not
 
@@ -20,11 +20,13 @@ def file_exists(file: str, path: str="") -> bool:
     else:
         file_path = file
 
-    if exists(file_path + ".yml") or exists(file_path + ".yaml"):
-        return True
+    if exists(file_path + ".yml"):
+        return file+".yml", False
+    elif exists(file_path + ".yaml"):
+        return file+".yaml", False
     else:
         sys.stdout.write(f"Error: file does not exist {file}.yml(.yaml)\n")
-        return False
+        return None, True
 
 def list_entries(type: str, path: str) -> None:
     """
@@ -35,11 +37,13 @@ def list_entries(type: str, path: str) -> None:
     - `path`: path to the folder where .yml(.yaml) files are present.
     """
     
-    if not file_exists(type, path):
+    # Check if file exists
+    file, err = file_exists(type, path)
+    if err:
         return
 
     # Open the file
-    with open(path + f"{type}.yml") as f:
+    with open(path + file) as f:
         data = yaml.safe_load(f)[type]
     
     if not data:
@@ -96,8 +100,13 @@ def get_entry(type: str, name: str, path: str) -> None:
     - `path`: path to the folder where .yml(.yaml) files are present.
     """
     
+    # Check if file exists
+    file, err = file_exists(type+"s", path)
+    if err:
+        return
+
     # Open the file
-    with open(path+f"{type}s.yml") as f:
+    with open(path+file) as f:
         data = yaml.safe_load(f)[f"{type}s"]
 
     # Iterate through all of the file's entries
@@ -139,7 +148,7 @@ def get_entry(type: str, name: str, path: str) -> None:
     # By the passed name
     sys.stdout.write(f"Error: no such {type}\n")
 
-def folder_correct(path: str) -> bool:
+def folder_correct(path: str) -> tuple:
     """
     Checks if the folder exists or not
 
@@ -147,10 +156,16 @@ def folder_correct(path: str) -> bool:
     - `path`: path to the folder where .yml(.yaml) files are present.
     """
 
-    if len(path) > 0 and not exists(path):
+    # Check if the folder exists
+    if len(path) == 0:
+        return path, False
+    elif exists(path):
+        # If it does - add the slash to the end of it
+        # In order to be handled correctly
+        return path+"\\", False
+    else:
         sys.stdout.write("Error: folder does not exist\n")
-        return False
-    return True
+        return None, True
 
 @app.command()
 def list(type: str, path: str="") -> None:
@@ -162,12 +177,10 @@ def list(type: str, path: str="") -> None:
     - `path`: path to the folder where .yml(.yaml) files are present.
     """
 
-    # Check if the folder exists
-    if not folder_correct(path): return
-    # If it does - add the slash to the end of it
-    # In order to be handled correctly
-    else:
-        path += "\\"
+    # Check if folder is correct
+    path, err = folder_correct(path)
+    if err:
+        return
 
     # If argument builds was passed
     if type.lower() == "builds":
@@ -193,12 +206,10 @@ def get(type: str, name: str, path: str="") -> None:
     - `path`: path to the folder where .yml(.yaml) files are present.
     """
     
-    # Check if the folder exists
-    if folder_correct(path): return
-    # If it does - add the slash to the end of it
-    # In order to be handled correctly
-    else:
-        path += "\\"
+    # Check if folder is correct
+    path, err = folder_correct(path)
+    if err:
+        return
     
     # If argument builds was passed
     if type.lower() == "build":

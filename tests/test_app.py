@@ -9,19 +9,19 @@ def test_folder_correct_exists(tmp_path):
     folder_path = tmp_path / "test_folder"
     folder_path.mkdir()
     # Check if the output is correct
-    assert folder_correct(str(folder_path)) == True
+    assert folder_correct(str(folder_path)) == (str(folder_path)+"\\", False)
 
 # Test when folder does not exists
 def test_folder_correct_not_exists(capsys):
     # Try non-existing folder
-    assert folder_correct("non_existing_folder") == False
+    assert folder_correct("non_existing_folder") == (None, True)
     captured = capsys.readouterr()
     # Check if the output is correct
     assert captured.out == "Error: folder does not exist\n"
 
 # Test when folder path is empty
 def test_folder_correct_empty_path():    
-    assert folder_correct("") == True
+    assert folder_correct("") == ("", False)
 #endregion
 
 
@@ -39,36 +39,36 @@ def correct_file_yml(tmpdir):
 def test_file_exists_yml(correct_file_yml):
     # Check if the output is correct
     assert file_exists(os.path.basename(correct_file_yml)[:-4],
-                       os.path.dirname(correct_file_yml)+"\\") == True
+                       os.path.dirname(correct_file_yml)+"\\") == ("correct.yml", False)
 
 # Test when file does not exists
 def test_file_not_exists_yml(capsys, tmp_path):
     # Check if the output is correct
     assert file_exists(os.path.basename("not_correct.yml")[:-4],
-                       str(tmp_path)+"\\") == False
+                       str(tmp_path)+"\\") == (None, True)
     captured = capsys.readouterr()
     assert captured.out == "Error: file does not exist not_correct.yml(.yaml)\n"
 
 # Define correct .yaml file fixture
 @pytest.fixture
 def correct_file_yaml(tmpdir):
-    # Create a temporary .yml file
+    # Create a temporary .yaml file
     correct_file = tmpdir.join("correct.yaml")
     correct_file.write("")
-    # Return the temporary .yml file
+    # Return the temporary .yaml file
     yield str(correct_file)
 
 # Test when file exists
 def test_file_exists_yaml(correct_file_yaml):
     # Check if the output is correct
     assert file_exists(os.path.basename(correct_file_yaml)[:-5],
-                       os.path.dirname(correct_file_yaml)+"\\") == True
+                       os.path.dirname(correct_file_yaml)+"\\") == ("correct.yaml", False)
 
 # Test when file does not exists
 def test_file_not_exists_yaml(capsys, tmp_path):
     # Check if the output is correct
     assert file_exists(os.path.basename("not_correct.yaml")[:-5],
-                       str(tmp_path)+"\\") == False
+                       str(tmp_path)+"\\") == (None, True)
     captured = capsys.readouterr()
     assert captured.out == "Error: file does not exist not_correct.yml(.yaml)\n"
 #endregion
