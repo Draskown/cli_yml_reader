@@ -216,7 +216,7 @@ def get(type: str, name: str, path: str="") -> None:
         # Print out the information about the build
         get_entry(type.lower(), name, path)
     # If argument tasks was passed
-    elif type.lowe() == "task":
+    elif type.lower() == "task":
         # Print out the information about the task
         get_entry(type.lower(), name, path)
     # If there is a typo or a wrong argument
