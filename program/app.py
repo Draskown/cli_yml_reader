@@ -107,7 +107,7 @@ def get_entry(type: str, name: str, path: str) -> None:
         # If the passed name is in the file
         if entry_name == name:
             # Print out the header and name of the entry
-            sys.stdout.write("Task info:\n")
+            sys.stdout.write(f"{type.capitalize()} info:\n")
             sys.stdout.write(f"- name: {entry_name}\n")
             
             # If task type was specified
