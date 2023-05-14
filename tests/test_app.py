@@ -24,6 +24,7 @@ def test_folder_correct_empty_path():
     assert folder_correct("") == True
 #endregion
 
+
 #region File tests
 # Define correct .yml file fixture
 @pytest.fixture
@@ -72,10 +73,11 @@ def test_file_not_exists_yaml(capsys, tmp_path):
     assert captured.out == "Error: file does not exist not_correct.yml(.yaml)\n"
 #endregion
 
+
 #region List tasks tests
 # Define correct tasks fixture
 @pytest.fixture
-def correct_file(tmpdir):
+def list_tasks_file(tmpdir):
     # Create a temporary tasks.yml file
     tasks_file = tmpdir.join("tasks.yml")
     # Fill the temporary tasks.yml file
@@ -83,18 +85,16 @@ def correct_file(tmpdir):
         """
         tasks:
           - name: Task 1
-            dependencies: Do something
           - name: Task 2
-            dependencies: Do something else
         """
     )
     # Return the temporary tasks.yml file
     yield str(tasks_file)
 
 # Test when the file is correct
-def test_list_tasks_correct(capsys, correct_file):
+def test_list_tasks(capsys, list_tasks_file):
     # Call the function to list tasks
-    list_entries("tasks", os.path.dirname(correct_file)+"\\")
+    list_entries("tasks", os.path.dirname(list_tasks_file)+"\\")
 
     # Check if the output is correct
     captured = capsys.readouterr()
@@ -115,7 +115,7 @@ def empty_tasks_file(tmpdir):
     yield str(tasks_file)
 
 # Test when the file is empty
-def test_list_tasks_empty_file(capsys, empty_tasks_file):
+def test_list_tasks_empty(capsys, empty_tasks_file):
     # Call the function to list tasks
     list_entries("tasks", os.path.dirname(empty_tasks_file)+"\\")
 
@@ -124,10 +124,11 @@ def test_list_tasks_empty_file(capsys, empty_tasks_file):
     assert captured.out == "There are no tasks\n"
 #endregion
 
+
 #region List build tests
 # Define correct builds fixture
 @pytest.fixture
-def correct_builds_file(tmpdir):
+def list_builds_file(tmpdir):
     # Create a temporary builds.yml file
     builds_file = tmpdir.join("builds.yml")
     # Fill a temporary builds.yml file
@@ -135,18 +136,16 @@ def correct_builds_file(tmpdir):
         """
         builds:
           - name: Build 1
-            description: Build something
           - name: Build 2
-            description: Build something else
         """
     )
     # Return a temporary builds.yml file
     yield str(builds_file)
 
 # Test when the file is correct
-def test_list_builds_correct(capsys, correct_builds_file):
+def test_list_builds(capsys, list_builds_file):
     # Call the function to list builds
-    list_entries("builds", os.path.dirname(correct_builds_file)+"\\")
+    list_entries("builds", os.path.dirname(list_builds_file)+"\\")
 
     # Check if the output is correct
     captured = capsys.readouterr()
@@ -176,3 +175,140 @@ def test_list_builds_empty(capsys, empty_builds_file):
     assert captured.out == "There are no builds\n"
 #endregion
 
+
+#region Get dependecies tests
+# Define dependencies fixture
+@pytest.fixture
+def file_get_dependencies(tmpdir):
+    # Create a temporary tasks.yml file
+    tasks_file = tmpdir.join("tasks.yml")
+    # Fill the temporary tasks.yml file
+    tasks_file.write(
+        """
+        tasks:
+          - name: Task 1
+            dependencies: 
+                - a
+                - b
+          - name: Task 2
+            dependencies: []
+        """
+    )
+    # Return the temporary tasks.yml file
+    yield str(tasks_file)
+
+# Test when the file is correct
+def test_get_dependencies(file_get_dependencies):
+    # Check if the output is correct
+    assert get_dependencies(
+            "Task 1",
+            os.path.dirname(file_get_dependencies)+"\\") == "a, b, Task 1, "
+    assert get_dependencies(
+            "Task 2",
+            os.path.dirname(file_get_dependencies)+"\\") == "Task 2, "
+#endregion
+
+
+#region Get tests
+# Define get task fixture
+@pytest.fixture
+def correct_tasks_get(tmpdir):
+    # Create a temporary tasks.yml file
+    tasks_file = tmpdir.join("tasks.yml")
+    # Fill the temporary tasks.yml file
+    tasks_file.write(
+        """
+        tasks:
+          - name: Task 1
+            dependencies: 
+                - a
+                - b
+          - name: Task 2
+            dependencies: []
+        """
+    )
+    # Return the temporary tasks.yml file
+    yield str(tasks_file)
+
+# Test when the file is correct
+def test_get_task(capsys, correct_tasks_get):
+    # Call the function to get a task
+    get_entry("task", "Task 1", os.path.dirname(correct_tasks_get)+"\\")
+
+    # Check if the output is correct
+    captured = capsys.readouterr()
+    assert captured.out == "Task info:\n- name: Task 1\n- dependencies: a, b, Task 1\n"
+
+    # Call the function to get a task
+    get_entry("task", "Task 2", os.path.dirname(correct_tasks_get)+"\\")
+
+    # Check if the output is correct
+    captured = capsys.readouterr()
+    assert captured.out == "Task info:\n- name: Task 2\n- dependencies: Task 2\n"
+    
+    # Call the function to get a task
+    get_entry("task", "Task 3", os.path.dirname(correct_tasks_get)+"\\")
+
+    # Check if the output is correct
+    captured = capsys.readouterr()
+    assert captured.out == "Error: no such task\n"
+
+# Define get build fixture
+@pytest.fixture
+def correct_build_get(tmpdir):
+    # Create a temporary tasks.yml file
+    tasks_file = tmpdir.join("tasks.yml")
+    # Fill the temporary tasks.yml file
+    tasks_file.write(
+        """
+        tasks:
+          - name: Task 1
+            dependencies: 
+                - a
+                - b
+          - name: Task 2
+            dependencies: []
+        """
+    )
+    
+    # Create a temporary builds.yml file
+    builds_file = tmpdir.join("builds.yml")
+    # Fill the temporary builds.yml file
+    builds_file.write(
+        """
+        builds:
+          - name: Build 1
+            tasks: 
+                - Task 1
+                - Task 2
+          - name: Build 2
+            tasks:
+                - Task 2
+        """
+    )
+    # Return the temporary tasks.yml file
+    yield str(builds_file)
+
+# Test when the file is correct
+def test_get_build(capsys, correct_build_get):
+    # Call the function to get a bulid
+    get_entry("build", "Build 1", os.path.dirname(correct_build_get)+"\\")
+
+    # Check if the output is correct
+    captured = capsys.readouterr()
+    assert captured.out == "Build info:\n- name: Build 1\n- tasks: a, b, Task 1, Task 2\n"
+
+    # Call the function to get a bulid
+    get_entry("build", "Build 2", os.path.dirname(correct_build_get)+"\\")
+
+    # Check if the output is correct
+    captured = capsys.readouterr()
+    assert captured.out == "Build info:\n- name: Build 2\n- tasks: Task 2\n"
+    
+    # Call the function to get a bulid
+    get_entry("build", "Build 3", os.path.dirname(correct_build_get)+"\\")
+
+    # Check if the output is correct
+    captured = capsys.readouterr()
+    assert captured.out == "Error: no such build\n"
+#endregion
