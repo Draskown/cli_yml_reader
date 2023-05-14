@@ -1,7 +1,7 @@
 # CYD - Cli Yml Reader
 
 ## Description
-A program to read .yml/.yaml files specified by the arguments that are passed to the command line, built usin Typer
+A program to read .yml/.yaml files specified by the arguments that are passed to the command line, built using Typer
 
 ## Installation
 
